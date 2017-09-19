@@ -100,8 +100,7 @@ sudo::sudo(QWidget *parent) :
     QObject::connect(Func[1],SIGNAL(clicked()),this,SLOT(Undo()));
     QObject::connect(Func[2],SIGNAL(clicked()),this,SLOT(Restartchoose()));
     QObject::connect(Func[3],SIGNAL(clicked()),this,SLOT(pause()));
-   // QObject::connect(Func[4],SIGNAL(clicked()),this,SLOT(GetAnswer()));
-
+    QObject::connect(Func[4],SIGNAL(clicked()),this,SLOT(GetAnswer()));
     Sty="border:1px solid yellow;background-color:rgb(255,255,200);";
     Cong=new QDialog(this);
     Cong->setStyleSheet(Sty);
@@ -129,6 +128,7 @@ sudo::sudo(QWidget *parent) :
     pYes->setText(tr("&是"));
     pNo->setText(tr("&否"));
     sw->hide();
+    Ansstate=0;
 
     QObject::connect(pYes,SIGNAL(clicked()),this,SLOT(Restart()));
     QObject::connect(pNo,SIGNAL(clicked()),this,SLOT(NoRestart()));
@@ -154,7 +154,6 @@ sudo::sudo(QWidget *parent) :
 
 void sudo::Restartchoose()
 {
-    qDebug("5");
     sw->show();
     sw->raise();
 }
@@ -200,12 +199,12 @@ void sudo::Restart()
     lim=0;
     now=0;
     m=s=0;
+    Ansstate=0;
 }
 
 //produce a puzzle of sudoku.
 void sudo::ShowAll(int limi)
 {
-    qDebug("1");
     ui->Select->hide();
     for(int i=0;i<9;i++)
         for(int j=0;j<9;j++)
@@ -214,7 +213,6 @@ void sudo::ShowAll(int limi)
     for(int i=0;i<5;i++)Func[i]->show();
     tim->show();
     ui->clk->show();
-    sw->hide();
 
     chk->start(1000);
 
@@ -246,6 +244,7 @@ void sudo::ShowAll(int limi)
     top=now=0;
     m=s=0;
     lim=0;
+    Ansstate=0;
     clearstyle();
 }
 
@@ -357,12 +356,18 @@ void sudo::Terminal()
             for(int k=0;k<9;k++)Lit[i][j][k]->hide();
         }
     for(int i=0;i<10;i++)Num[i]->hide();
-    for(int i=0;i<4;i++)Func[i]->hide();
+    for(int i=0;i<5;i++)Func[i]->hide();
     chk->stop();
     ui->clk->hide();
     tim->hide();
     Lev->hide();
-    for(int i=0;i<10;i++)Dif[i]->setDown(false);
+    for(int i=0;i<10;i++){
+        if(Dif[i]->isChecked()){
+            Dif[i]->setChecked(false);
+            Dif[i]->setCheckable(false);
+        }
+    }
+
 }
 
 //Fill in the blanks with the numbers
@@ -379,7 +384,7 @@ void sudo::Fill(int num)
         cn=Grid[px-1][py-1]->num;
         chn=0;
     }
-    deal(chn);
+    deal(chn,0);
     pcheck=true;
     for(int i=0;i<9;i++)
         for(int j=0;j<9;j++)if(Grid[i][j]->ber!=duc->ter[i][j])pcheck=false;
@@ -393,7 +398,7 @@ void sudo::Fill(int num)
     top=now;
 }
 
-void sudo::deal(int num)
+void sudo::deal(int num,int kd)
 {
     QString sty;
     int x,y,l,k;
@@ -429,7 +434,7 @@ void sudo::deal(int num)
         Grid[x][y]->hide();
         for(int i=0;i<9;i++)Lit[x][y][i]->show();
     }
-    restyle();
+    if(kd==0)restyle();
 }
 
 void sudo::Redo()
@@ -442,7 +447,7 @@ void sudo::Redo()
     if(his[now].btn<=9)chn=(Grid[px-1][py-1]->num)^(1<<(his[now].btn-1));
     else chn=his[now].num;
     now--;
-    deal(chn);
+    deal(chn,0);
 }
 
 void sudo::Undo()
@@ -455,7 +460,7 @@ void sudo::Undo()
     lim--;
     if(his[now].btn<=9)chn=(Grid[px-1][py-1]->num)^(1<<(his[now].btn-1));
     else chn=0;
-    deal(chn);
+    deal(chn,0);
 }
 
 void sudo::updatetime()
@@ -523,9 +528,34 @@ void sudo::pause()
     else{
         Func[3]->setText(tr("暂停"));
         chk->start(1000);
-        sw->hide();
     }
     pms=pms^1;
+}
+
+void sudo::GetAnswer()
+{
+    QString sty;
+    if(Ansstate==0){
+        for(int i=0;i<9;i++)
+            for(int j=0;j<9;j++){
+                for(int k=0;k<9;k++)Lit[i][j][k]->hide();
+                Grid[i][j]->show();
+                sty="%1";
+                Grid[i][j]->setText(sty.arg(duc->ter[i][j]));
+            }
+    }
+    else{
+        for(int i=0;i<9;i++)
+            for(int j=0;j<9;j++){
+                px=i+1;
+                py=j+1;
+                deal(Grid[px-1][py-1]->num,1);
+            }
+    }
+    clearstyle();
+    px=0;
+    py=0;
+    Ansstate^=1;
 }
 
 sudo::~sudo()

@@ -36,13 +36,14 @@ private slots:
     void Restartchoose();
     void Restart();
     void NoRestart();
+    void GetAnswer();
 private:
     Ui::sudo *ui;
     doku *Grid[9][9];
     rdoku *Dif[11];
     doku *Lit[9][9][9];
     doku *Num[10];
-    QPushButton *Func[4];
+    QPushButton *Func[10];
     QDialog *sw;
     QPushButton *pYes;
     QPushButton *pNo;
@@ -54,10 +55,10 @@ private:
     QLabel *Nim;
     QLabel *Tot;
     Producer *duc;
-    int px,py,m,s,pms;
+    int px,py,m,s,pms,Ansstate;
     void clearstyle();
     void setclickstyle(int,int,int);
-    void deal(int);
+    void deal(int,int);
     void restyle();
     void Terminal();
     action his[1001];
